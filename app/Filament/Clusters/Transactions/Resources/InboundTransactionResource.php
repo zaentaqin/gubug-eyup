@@ -7,24 +7,31 @@ use Filament\Tables;
 use App\Models\Order;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
+use Illuminate\Support\Carbon;
 use Filament\Resources\Resource;
 use App\Models\InboundTransaction;
+use Filament\Actions\ExportAction;
 use Filament\Forms\Components\Grid;
+use Filament\Tables\Filters\Filter;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Section;
 use App\Filament\Clusters\Transactions;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\TextInput;
 use Filament\Tables\Actions\ActionGroup;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Forms\Components\DatePicker;
 use Filament\Tables\Filters\SelectFilter;
+use Illuminate\Database\Eloquent\Builder;
+use Filament\Tables\Actions\ExportBulkAction;
+use App\Filament\Exports\InboundTransactionExporter;
 use App\Filament\Clusters\Transactions\Resources\InboundTransactionResource\Pages;
 
 class InboundTransactionResource extends Resource
 {
     protected static ?string $model = InboundTransaction::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-arrow-up-tray';
+    protected static ?string $navigationIcon = 'heroicon-o-arrow-down-tray';
 
     protected static ?string $cluster = Transactions::class;
 
@@ -56,7 +63,6 @@ class InboundTransactionResource extends Resource
                                 })
                                 ->required()
                                 ->disabled(fn($state, $get) => InboundTransaction::where('order_id', $state)->count() >= 2),
-
 
                             TextInput::make('telephone')
                                 ->disabled(),
@@ -105,10 +111,11 @@ class InboundTransactionResource extends Resource
                     ->searchable(),
 
                 TextColumn::make('amount')
-                    ->numeric()
+                    ->money('IDR')
                     ->sortable(),
 
                 TextColumn::make('status')
+                    ->sortable()
                     ->badge()
                     ->color(fn(string $state): string => match ($state) {
                         'Lunas' => 'success',
@@ -116,19 +123,54 @@ class InboundTransactionResource extends Resource
                     })
 
             ])
+
             ->filters([
+                Filter::make('date')
+                    ->form([
+                        DatePicker::make('start_date'),
+                        DatePicker::make('end_date'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['start_date'],
+                                fn(Builder $query, $date) => $query->whereDate('date', '>=', $date),
+                            )
+                            ->when(
+                                $data['end_date'],
+                                fn(Builder $query, $date) => $query->whereDate('date', '<=', $date),
+                            );
+                    })
+                    ->indicateUsing(function (array $data): array {
+                        $indicators = [];
+                        if ($data['start_date']) {
+                            $indicators['start_date'] = 'Start Date: ' . Carbon::parse($data['start_date'])->toFormattedDateString();
+                        }
+                        if ($data['end_date']) {
+                            $indicators['end_date'] = 'End Date: ' . Carbon::parse($data['end_date'])->toFormattedDateString();
+                        }
+                        return $indicators;
+                    }),
+
                 SelectFilter::make('status')
                     ->options([
                         'DP' => 'DP',
                         'Lunas' => 'Lunas',
                     ]),
             ])
+
             ->actions([
                 ActionGroup::make([
                     Tables\Actions\ViewAction::make(),
                     Tables\Actions\EditAction::make(),
                     Tables\Actions\DeleteAction::make(),
                 ]),
+            ])
+
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([]),
+                ExportBulkAction::make()
+                    ->exporter(InboundTransactionExporter::class)
             ]);
     }
 

@@ -11,21 +11,29 @@ use Filament\Forms\Set;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
 use App\Models\DisableDate;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Number;
 use Filament\Resources\Resource;
+use Filament\Actions\ExportAction;
 use Filament\Forms\Components\Grid;
 use Filament\Tables\Actions\Action;
+use Filament\Tables\Filters\Filter;
 use Filament\Forms\Components\Group;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Wizard;
 use Filament\Forms\Components\Section;
+use App\Filament\Exports\OrderExporter;
 use Filament\Forms\Components\Repeater;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\TextInput;
 use Filament\Tables\Actions\ActionGroup;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Forms\Components\DatePicker;
+use Filament\Tables\Filters\SelectFilter;
+use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms\Components\Placeholder;
+use Filament\Tables\Actions\ExportBulkAction;
 use App\Filament\Resources\OrderResource\Pages;
 
 
@@ -161,24 +169,25 @@ class OrderResource extends Resource
             ]);
     }
 
-
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
                 TextColumn::make('date')
-                    ->label('Date')
+                    ->sortable()
                     ->dateTime('d-m-Y'),
 
                 TextColumn::make('name')
-                    ->sortable(),
+                    ->sortable()
+                    ->searchable(),
 
                 TextColumn::make('address')
-                    ->sortable()
                     ->limit(30)
+                    ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('marital_address')
+                    ->searchable()
                     ->limit(30),
 
                 TextColumn::make('total')
@@ -193,21 +202,37 @@ class OrderResource extends Resource
                     ->money('IDR')
                     ->sortable(),
 
-
-
-                // TextColumn::make('invoice.status')
-                //     ->badge()
-                //     ->color(fn(string $state): string => match ($state) {
-                //         'DP' => 'primary',
-                //         'Lunas' => 'success',
-                //         default => 'default',
-                //     })
-                //     ->sortable(),
-
-
             ])
+
             ->filters([
-                //
+                Filter::make('date')
+                    ->form([
+                        DatePicker::make('start_date'),
+                        DatePicker::make('end_date'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['start_date'],
+
+                                fn(Builder $query, $date) => $query->whereDate('date', '>=', $date),
+                            )
+                            ->when(
+                                $data['end_date'],
+
+                                fn(Builder $query, $date) => $query->whereDate('date', '<=', $date),
+                            );
+                    })
+                    ->indicateUsing(function (array $data): array {
+                        $indicators = [];
+                        if ($data['start_date']) {
+                            $indicators['start_date'] = 'Start Date: ' . Carbon::parse($data['start_date'])->toFormattedDateString();
+                        }
+                        if ($data['end_date']) {
+                            $indicators['end_date'] = 'End Date: ' . Carbon::parse($data['end_date'])->toFormattedDateString();
+                        }
+                        return $indicators;
+                    }),
             ])
             ->actions([
                 ActionGroup::make([
@@ -219,6 +244,14 @@ class OrderResource extends Resource
                         ->openUrlInNewTab(),
                     Tables\Actions\DeleteAction::make(),
                 ]),
+            ])
+
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                ]),
+                ExportBulkAction::make()
+                    ->exporter(OrderExporter::class)
             ]);
     }
 

@@ -2,8 +2,9 @@
 
 namespace App\Filament\Resources\OrderResource\Pages;
 
-use App\Filament\Resources\OrderResource;
 use Filament\Actions;
+use App\Filament\Exports\OrderExporter;
+use App\Filament\Resources\OrderResource;
 use Filament\Resources\Pages\ListRecords;
 
 class ListOrders extends ListRecords
@@ -13,6 +14,9 @@ class ListOrders extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            Actions\ExportAction::make()
+                ->label('Export All Orders')
+                ->exporter(OrderExporter::class),
             Actions\CreateAction::make(),
         ];
     }

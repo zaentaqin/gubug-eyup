@@ -28,13 +28,15 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
-              ->darkMode(false)
+            ->darkMode(false)
             ->brandName('Gubug Eyup')
             ->brandLogo(asset('/logo.png'))
             ->brandLogoHeight('3rem')
             ->colors([
                 'primary' => Color::Amber,
             ])
+            ->databaseNotifications()
+            ->databaseNotificationsPolling('5s')
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->discoverClusters(in: app_path('Filament/Clusters'), for: 'App\\Filament\\Clusters')

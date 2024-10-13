@@ -2,9 +2,10 @@
 
 namespace App\Filament\Clusters\Transactions\Resources\OutboundTransactionResource\Pages;
 
-use App\Filament\Clusters\Transactions\Resources\OutboundTransactionResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
+use App\Filament\Exports\OutboundTransactionExporter;
+use App\Filament\Clusters\Transactions\Resources\OutboundTransactionResource;
 
 class ListOutboundTransactions extends ListRecords
 {
@@ -13,7 +14,10 @@ class ListOutboundTransactions extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            Actions\ExportAction::make()
+                ->label('Export data')
+                ->exporter(OutboundTransactionExporter::class),
+            Actions\CreateAction::make()
         ];
     }
 }
