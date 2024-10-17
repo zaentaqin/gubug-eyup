@@ -15,7 +15,7 @@ class ListOrders extends ListRecords
     {
         return [
             Actions\ExportAction::make()
-                ->label('Export All Orders')
+                ->label('Export orders')
                 ->exporter(OrderExporter::class),
             Actions\CreateAction::make(),
         ];
