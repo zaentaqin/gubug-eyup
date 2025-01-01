@@ -53,6 +53,7 @@ class InboundTransactionResource extends Resource
                                         $set('telephone', $order->telephone);
                                         $set('address', $order->address);
                                         $set('marital_address', $order->marital_address);
+                                        $set('grand_total', $order->grand_total);
                                     }
 
                                     $exitingsordersCount = InboundTransaction::where('order_id', $state)->count();
@@ -73,7 +74,7 @@ class InboundTransactionResource extends Resource
                             TextInput::make('marital_address')
                                 ->disabled(),
 
-                            TextInput::make('total')
+                            TextInput::make('grand_total')
                                 ->disabled(),
 
                         ]),

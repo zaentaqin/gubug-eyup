@@ -13,19 +13,19 @@ class Dashboard extends BaseDashboard
 {
     use BaseDashboard\Concerns\HasFiltersForm;
 
-    public function filtersForm(Form $form): Form
-    {
-        return $form
-            ->schema([
-                Section::make()
-                    ->schema([
-                        DatePicker::make('startDate')
-                            ->maxDate(fn(Get $get) => $get('endDate') ?: now()),
-                        DatePicker::make('endDate')
-                            ->minDate(fn(Get $get) => $get('startDate') ?: now())
-                            ->maxDate(now()),
-                    ])
-                    ->columns(2),
-            ]);
-    }
+    // public function filtersForm(Form $form): Form
+    // {
+    //     return $form
+    //         ->schema([
+    //             Section::make()
+    //                 ->schema([
+    //                     DatePicker::make('startDate')
+    //                         ->maxDate(fn(Get $get) => $get('endDate') ?: now()),
+    //                     DatePicker::make('endDate')
+    //                         ->minDate(fn(Get $get) => $get('startDate') ?: now())
+    //                         ->maxDate(now()),
+    //                 ])
+    //                 ->columns(2),
+    //         ]);
+    // }
 }
